@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>お知らせ</title>
+  <!-- Supabase JS SDK（CDN） -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+  <h1>お知らせ</h1>
+
+  <!-- カテゴリ絞り込みボタン（任意） -->
+  <div id="categoryFilter"></div>
+
+  <!-- お知らせ一覧の挿入先 -->
+  <ul id="newsList"></ul>
+
+  <script>
+    // ============================================================
+    // 設定（プロジェクトごとに変更する）
+    // ============================================================
+    const SUPABASE_URL      = 'YOUR_SUPABASE_URL'
+    const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY'
+
+    // ============================================================
+    // 初期化（変更不要）
+    // ============================================================
+    const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+
+    // ============================================================
+    // データ取得
+    // ============================================================
+
+    // お知らせ一覧取得（公開済みのみ・新しい順）
+    async function fetchNews(category = null) {
+      let query = db
+        .from('news')
+        .select('*')
+        .eq('is_published', true)
+        .order('published_at', { ascending: false })
+
+      if (category) query = query.eq('category', category)
+
+      const { data, error } = await query
+      if (error) { console.error(error); return [] }
+      return data
+    }
+
+    // カテゴリ一覧取得
+    async function fetchCategories() {
+      const { data, error } = await db
+        .from('news')
+        .select('category')
+        .eq('is_published', true)
+        .not('category', 'is', null)
+
+      if (error) return []
+      return [...new Set(data.map(item => item.category).filter(Boolean))]
+    }
+
+    // ============================================================
+    // 描画（デザインはここを変更する）
+    // ============================================================
+
+    function renderNews(newsList) {
+      const el = document.getElementById('newsList')
+      if (!newsList.length) {
+        el.innerHTML = '<li>お知らせはありません</li>'
+        return
+      }
+      el.innerHTML = newsList.map(news => `
+        <li>
+          <span>${news.published_at ? new Date(news.published_at).toLocaleDateString('ja-JP') : ''}</span>
+          ${news.category ? `<span>[${news.category}]</span>` : ''}
+          <span>${news.title}</span>
+        </li>
+      `).join('')
+    }
+
+    function renderCategories(categories) {
+      if (!categories.length) return
+      const el = document.getElementById('categoryFilter')
+      el.innerHTML = [
+        '<button onclick="onCategoryClick(null)">すべて</button>',
+        ...categories.map(c => `<button onclick="onCategoryClick('${c}')">${c}</button>`)
+      ].join('')
+    }
+
+    async function onCategoryClick(category) {
+      const newsList = await fetchNews(category)
+      renderNews(newsList)
+    }
+
+    // ============================================================
+    // 初期ロード
+    // ============================================================
+    async function init() {
+      const [newsList, categories] = await Promise.all([
+        fetchNews(),
+        fetchCategories(),
+      ])
+      renderNews(newsList)
+      renderCategories(categories)
+    }
+
+    init()
+  </script>
+
+</body>
+</html>
