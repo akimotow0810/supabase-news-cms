@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { deleteNews } from './actions'
+import DeleteButton from '@/components/admin/DeleteButton'
 import type { News } from '@/types'
 
 export default async function AdminPage() {
@@ -61,17 +61,7 @@ export default async function AdminPage() {
                   <Link href={`/admin/news/${news.id}/edit`} style={{ marginRight: 12 }}>
                     編集
                   </Link>
-                  <form action={deleteNews.bind(null, news.id)} style={{ display: 'inline' }}>
-                    <button
-                      type="submit"
-                      style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-                      onClick={(e) => {
-                        if (!confirm(`「${news.title}」を削除しますか？`)) e.preventDefault()
-                      }}
-                    >
-                      削除
-                    </button>
-                  </form>
+                  <DeleteButton id={news.id} title={news.title} />
                 </td>
               </tr>
             ))}

@@ -1,13 +1,7 @@
-import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
 import LogoutButton from '@/components/admin/LogoutButton'
 
-export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) redirect('/admin/login')
-
+// 認証チェックは middleware.ts が担当。このレイアウトは /admin/login を除く全ページに適用される。
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
     <div>
       <header
