@@ -1,88 +1,55 @@
-# Supabase × Next.js お知らせCMSテンプレート
+# Supabase お知らせCMSテンプレート
 
-お知らせ機能を持つ Web サイトに使い回せるテンプレートです。  
-管理画面（ログイン・一覧・投稿・編集・削除）と、公開サイト向けのデータ取得ユーティリティがセットになっています。
+お知らせ機能を持つ Web サイトに使い回せるテンプレートです。
+HTML + JS のみで構成しているため、Vercel・レンタルサーバー・GitHub Pages どこにでも置けます。
 
 ## 技術スタック
 
 | 項目 | 内容 |
 |------|------|
-| フレームワーク | Next.js 15 (App Router) |
-| 言語 | TypeScript |
-| BaaS | Supabase (Auth / DB / Storage) |
+| フロントエンド | HTML + JavaScript |
+| BaaS | Supabase（Auth / DB / Storage） |
+| ホスティング | Vercel・レンタルサーバー・GitHub Pages どこでもOK |
 
 ## ディレクトリ構成
 
 ```
-├── app/
-│   ├── admin/
-│   │   ├── layout.tsx          # 管理画面レイアウト（認証チェック込み）
-│   │   ├── page.tsx            # お知らせ一覧
-│   │   ├── actions.ts          # Server Actions（CRUD）
-│   │   ├── login/page.tsx      # ログイン画面
-│   │   └── news/
-│   │       ├── new/page.tsx    # 新規作成
-│   │       └── [id]/edit/page.tsx  # 編集
-│   └── (public)/news/
-│       ├── page.tsx            # 公開一覧ページ（実装例）
-│       └── [id]/page.tsx       # 公開詳細ページ（実装例）
-├── components/admin/
-│   ├── NewsForm.tsx            # 投稿・編集フォーム
-│   └── LogoutButton.tsx
-├── lib/
-│   ├── supabase/
-│   │   ├── client.ts           # ブラウザ用クライアント
-│   │   └── server.ts           # サーバー用クライアント
-│   └── news/
-│       └── fetch.ts            # ★ 公開サイト向けデータ取得ユーティリティ
-├── types/index.ts              # News 型定義
-├── middleware.ts               # /admin/* のルート保護
-└── supabase/migrations/
-    └── 001_create_news_table.sql
+├── admin/
+│   ├── login.html       # ログイン画面
+│   ├── index.html       # お知らせ一覧
+│   ├── new.html         # 新規作成
+│   └── edit.html        # 編集（?id=xxx で記事を特定）
+├── js/
+│   ├── supabase-config.js  # ★ Supabase 接続設定（ここだけ変更）
+│   └── auth.js             # ログインチェック・ログアウト共通処理
+├── news.html            # 公開サイト向けお知らせ一覧（実装例）
+└── supabase/
+    └── migrations/
+        └── 001_create_news_table.sql
 ```
 
 ## セットアップ手順
 
-### 1. Next.js プロジェクトを作成
-
-```bash
-npx create-next-app@latest my-project --typescript --app
-cd my-project
-```
-
-### 2. 依存パッケージをインストール
-
-```bash
-npm install @supabase/ssr @supabase/supabase-js
-```
-
-### 3. テンプレートファイルをコピー
-
-このテンプレートの各ファイルをプロジェクトにコピーします。
-
-### 4. Supabase でプロジェクトを作成
+### 1. Supabase でプロジェクト作成
 
 1. [supabase.com](https://supabase.com) でプロジェクト作成
 2. SQL Editor で `supabase/migrations/001_create_news_table.sql` を実行
-3. Authentication → Providers → Email でメール認証を有効化
-4. Authentication → Users から管理者アカウントを手動作成
+3. Authentication → Users から管理者アカウントを手動作成
 
-### 5. 環境変数を設定
+### 2. 接続情報を設定
 
-```bash
-cp .env.local.example .env.local
+`js/supabase-config.js` の2行を書き換える（Supabase ダッシュボードの Settings → API から確認）
+
+```js
+const SUPABASE_URL      = 'https://xxxxxxxxxx.supabase.co'
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
 ```
 
-`.env.local` に Supabase の URL と ANON_KEY を入力します（Supabase ダッシュボードの Settings → API から確認）。
+### 3. デプロイ
 
-### 6. 動作確認
-
-```bash
-npm run dev
-```
-
-- 管理画面: `http://localhost:3000/admin/login`
-- 公開一覧: `http://localhost:3000/news`（実装例）
+- **Vercel**: リポジトリを連携してデプロイ
+- **レンタルサーバー**: FTP でそのままアップロード
+- **GitHub Pages**: リポジトリを公開設定にするだけ
 
 ---
 
@@ -106,31 +73,11 @@ npm run dev
 
 ## 公開サイトへの組み込み方
 
-`lib/news/fetch.ts` の関数を Server Component 内で呼び出すだけです。
+`news.html` をコピーして `js/supabase-config.js` を読み込めば動きます。
+`renderNews()` 関数の中のHTMLを編集するだけでデザインを変えられます。
 
-```tsx
-// app/news/page.tsx（例）
-import { getPublishedNews } from '@/lib/news/fetch'
-
-export default async function NewsPage() {
-  const newsList = await getPublishedNews({ limit: 10 })
-  // あとはデザインに合わせて自由にマークアップ
+```js
+function renderNews(newsList) {
+  // ここを各プロジェクトのデザインに合わせて変更する
 }
 ```
-
-### 使えるユーティリティ関数
-
-| 関数 | 説明 |
-|------|------|
-| `getPublishedNews(options?)` | 公開済み一覧。`limit` や `category` で絞り込み可 |
-| `getNewsById(id)` | ID で1件取得（非公開は `null` を返す） |
-| `getNewsCategories()` | 公開済み記事のカテゴリ一覧 |
-
----
-
-## カスタマイズのポイント
-
-- **カテゴリをプルダウンにしたい** → `NewsForm.tsx` の category フィールドを `<select>` に変更
-- **本文をリッチテキストにしたい** → `content` カラムに HTML を保存し、詳細ページで `dangerouslySetInnerHTML` で描画
-- **複数管理者に対応したい** → Supabase の Role や `admin_users` テーブルを追加して RLS を拡張
-- **OGP を設定したい** → 詳細ページに `export const metadata` または `generateMetadata` を追加

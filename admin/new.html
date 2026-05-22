@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>お知らせ新規作成</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+  <header style="display:flex; justify-content:space-between; align-items:center; padding:16px; border-bottom:1px solid #e5e7eb;">
+    <strong>管理画面</strong>
+    <button onclick="logout()">ログアウト</button>
+  </header>
+
+  <main style="padding:24px; max-width:720px;">
+    <h1>お知らせ新規作成</h1>
+
+    <form id="newsForm">
+      <div style="margin-bottom:20px;">
+        <label for="title" style="display:block; font-weight:bold; margin-bottom:4px;">タイトル *</label>
+        <input id="title" type="text" required style="display:block; width:100%; padding:8px;" />
+      </div>
+
+      <div style="margin-bottom:20px;">
+        <label for="category" style="display:block; font-weight:bold; margin-bottom:4px;">カテゴリ</label>
+        <input id="category" type="text" placeholder="例：お知らせ、イベント" style="display:block; width:100%; padding:8px;" />
+      </div>
+
+      <div style="margin-bottom:20px;">
+        <label for="content" style="display:block; font-weight:bold; margin-bottom:4px;">本文 *</label>
+        <textarea id="content" rows="12" required style="display:block; width:100%; padding:8px;"></textarea>
+      </div>
+
+      <div style="margin-bottom:20px;">
+        <label for="thumbnail" style="display:block; font-weight:bold; margin-bottom:4px;">サムネイル画像</label>
+        <input id="thumbnail" type="file" accept="image/*" />
+      </div>
+
+      <div style="margin-bottom:24px;">
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+          <input id="is_published" type="checkbox" />
+          公開する
+        </label>
+      </div>
+
+      <div style="display:flex; gap:12px;">
+        <button type="submit">保存する</button>
+        <a href="index.html">キャンセル</a>
+      </div>
+    </form>
+  </main>
+
+  <script src="../js/supabase-config.js"></script>
+  <script src="../js/auth.js"></script>
+  <script>
+    async function init() {
+      await requireAuth()
+    }
+
+    document.getElementById('newsForm').addEventListener('submit', async (e) => {
+      e.preventDefault()
+
+      const title        = document.getElementById('title').value
+      const content      = document.getElementById('content').value
+      const category     = document.getElementById('category').value || null
+      const is_published = document.getElementById('is_published').checked
+      const imageFile    = document.getElementById('thumbnail').files[0]
+
+      let thumbnail_url = null
+      if (imageFile) {
+        const ext  = imageFile.name.split('.').pop()
+        const path = `${Date.now()}.${ext}`
+        const { data: uploadData, error: uploadError } = await db.storage
+          .from('news-images')
+          .upload(path, imageFile)
+        if (uploadError) { alert('画像のアップロードに失敗しました'); return }
+        const { data: { publicUrl } } = db.storage.from('news-images').getPublicUrl(uploadData.path)
+        thumbnail_url = publicUrl
+      }
+
+      const { error } = await db.from('news').insert({
+        title,
+        content,
+        category,
+        thumbnail_url,
+        is_published,
+        published_at: is_published ? new Date().toISOString() : null,
+      })
+
+      if (error) { alert('保存に失敗しました'); return }
+      window.location.href = 'index.html'
+    })
+
+    init()
+  </script>
+
+</body>
+</html>

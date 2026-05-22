@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>お知らせ管理</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+  <header style="display:flex; justify-content:space-between; align-items:center; padding:16px; border-bottom:1px solid #e5e7eb;">
+    <strong>管理画面</strong>
+    <button onclick="logout()">ログアウト</button>
+  </header>
+
+  <main style="padding:24px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
+      <h1 style="margin:0;">お知らせ管理</h1>
+      <a href="new.html">＋ 新規作成</a>
+    </div>
+
+    <table style="width:100%; border-collapse:collapse;">
+      <thead>
+        <tr style="border-bottom:2px solid #e5e7eb; text-align:left;">
+          <th style="padding:8px 12px;">タイトル</th>
+          <th style="padding:8px 12px;">カテゴリ</th>
+          <th style="padding:8px 12px;">公開状態</th>
+          <th style="padding:8px 12px;">公開日</th>
+          <th style="padding:8px 12px;">操作</th>
+        </tr>
+      </thead>
+      <tbody id="newsList"></tbody>
+    </table>
+  </main>
+
+  <script src="../js/supabase-config.js"></script>
+  <script src="../js/auth.js"></script>
+  <script>
+    async function init() {
+      await requireAuth()
+
+      const { data, error } = await db
+        .from('news')
+        .select('*')
+        .order('created_at', { ascending: false })
+
+      if (error) { alert('データの取得に失敗しました'); return }
+
+      const tbody = document.getElementById('newsList')
+      if (!data.length) {
+        tbody.innerHTML = '<tr><td colspan="5" style="padding:12px;">お知らせはありません</td></tr>'
+        return
+      }
+
+      tbody.innerHTML = data.map(news => `
+        <tr style="border-bottom:1px solid #e5e7eb;">
+          <td style="padding:10px 12px;">${news.title}</td>
+          <td style="padding:10px 12px; color:#6b7280;">${news.category ?? '–'}</td>
+          <td style="padding:10px 12px;">${news.is_published ? '公開中' : '非公開'}</td>
+          <td style="padding:10px 12px; color:#6b7280;">
+            ${news.published_at ? new Date(news.published_at).toLocaleDateString('ja-JP') : '–'}
+          </td>
+          <td style="padding:10px 12px;">
+            <a href="edit.html?id=${news.id}" style="margin-right:12px;">編集</a>
+            <button
+              onclick="deleteNews('${news.id}', '${news.title.replace(/'/g, "\\'")}')"
+              style="color:#ef4444; background:none; border:none; cursor:pointer; padding:0;"
+            >削除</button>
+          </td>
+        </tr>
+      `).join('')
+    }
+
+    async function deleteNews(id, title) {
+      if (!confirm(`「${title}」を削除しますか？`)) return
+      const { error } = await db.from('news').delete().eq('id', id)
+      if (error) { alert('削除に失敗しました'); return }
+      init()
+    }
+
+    init()
+  </script>
+
+</body>
+</html>

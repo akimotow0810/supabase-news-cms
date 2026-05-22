@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>管理者ログイン</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+  <h1>管理者ログイン</h1>
+
+  <form id="loginForm">
+    <div>
+      <label for="email">メールアドレス</label><br>
+      <input id="email" type="email" required />
+    </div>
+    <div>
+      <label for="password">パスワード</label><br>
+      <input id="password" type="password" required />
+    </div>
+    <p id="errorMsg" style="color:red; display:none;"></p>
+    <button type="submit">ログイン</button>
+  </form>
+
+  <script src="../js/supabase-config.js"></script>
+  <script>
+    // ログイン済みなら管理画面へ
+    db.auth.getSession().then(({ data: { session } }) => {
+      if (session) window.location.href = 'index.html'
+    })
+
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault()
+      const email    = document.getElementById('email').value
+      const password = document.getElementById('password').value
+      const errorMsg = document.getElementById('errorMsg')
+
+      const { error } = await db.auth.signInWithPassword({ email, password })
+      if (error) {
+        errorMsg.textContent = 'メールアドレスまたはパスワードが正しくありません'
+        errorMsg.style.display = 'block'
+        return
+      }
+      window.location.href = 'index.html'
+    })
+  </script>
+
+</body>
+</html>

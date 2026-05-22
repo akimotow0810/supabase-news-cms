@@ -4,36 +4,29 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>お知らせ</title>
-  <!-- Supabase JS SDK（CDN） -->
+  <!--
+    【実装例】公開サイト向けお知らせ一覧ページ
+    デザインは各プロジェクトに合わせて自由に変更してください。
+    データ取得のロジックはそのまま流用できます。
+  -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
   <h1>お知らせ</h1>
 
-  <!-- カテゴリ絞り込みボタン（任意） -->
+  <!-- カテゴリ絞り込み（任意） -->
   <div id="categoryFilter"></div>
 
   <!-- お知らせ一覧の挿入先 -->
   <ul id="newsList"></ul>
 
+  <script src="js/supabase-config.js"></script>
   <script>
     // ============================================================
-    // 設定（プロジェクトごとに変更する）
-    // ============================================================
-    const SUPABASE_URL      = 'YOUR_SUPABASE_URL'
-    const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY'
-
-    // ============================================================
-    // 初期化（変更不要）
-    // ============================================================
-    const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
-
-    // ============================================================
-    // データ取得
+    // データ取得（変更不要）
     // ============================================================
 
-    // お知らせ一覧取得（公開済みのみ・新しい順）
     async function fetchNews(category = null) {
       let query = db
         .from('news')
@@ -48,7 +41,6 @@
       return data
     }
 
-    // カテゴリ一覧取得
     async function fetchCategories() {
       const { data, error } = await db
         .from('news')
