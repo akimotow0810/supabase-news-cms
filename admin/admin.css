@@ -654,7 +654,7 @@ input[type="file"] { display: none; }
 /* Photo Dropzone */
 .photo-dropzone {
   width: 100%;
-  min-height: 220px;
+  min-height: 280px;
   border: 2px dashed #d1d5db;
   border-radius: 12px;
   display: flex;
@@ -670,6 +670,24 @@ input[type="file"] { display: none; }
 .photo-dropzone:hover {
   border-color: #3b82f6;
   background: #eff6ff;
+}
+
+/* Photo Form 2-column layout */
+.photo-form-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  align-items: start;
+}
+
+.photo-form-left .photo-dropzone {
+  min-height: 340px;
+}
+
+@media (max-width: 680px) {
+  .photo-form-layout {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* ---------- Back Link ---------- */
