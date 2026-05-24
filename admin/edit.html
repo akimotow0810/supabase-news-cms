@@ -4,60 +4,86 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>お知らせ編集</title>
+  <link rel="stylesheet" href="admin.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
-  <header style="display:flex; justify-content:space-between; align-items:center; padding:16px; border-bottom:1px solid #e5e7eb;">
-    <strong>管理画面</strong>
-    <button onclick="logout()">ログアウト</button>
+  <header class="header">
+    <span class="header-logo">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+        <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+      </svg>
+      管理画面
+    </span>
+    <button class="btn-logout" onclick="logout()">ログアウト</button>
   </header>
 
-  <main style="padding:24px; max-width:720px;">
-    <h1>お知らせ編集</h1>
+  <div class="page-wrapper-narrow">
+    <div class="page-top">
+      <a href="index.html" style="display:inline-flex; align-items:center; gap:6px; color:#64748b; font-size:13px; font-weight:500; margin-bottom:4px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        一覧に戻る
+      </a>
+    </div>
 
-    <form id="newsForm">
-      <input type="hidden" id="existing_thumbnail_url" />
+    <h1 class="page-title" style="margin-bottom:20px;">お知らせ編集</h1>
 
-      <div style="margin-bottom:20px;">
-        <label for="title" style="display:block; font-weight:bold; margin-bottom:4px;">タイトル *</label>
-        <input id="title" type="text" required style="display:block; width:100%; padding:8px;" />
-      </div>
+    <div class="form-card">
+      <form id="newsForm">
+        <input type="hidden" id="existing_thumbnail_url" />
 
-      <div style="margin-bottom:20px;">
-        <label for="category" style="display:block; font-weight:bold; margin-bottom:4px;">カテゴリ</label>
-        <input id="category" type="text" style="display:block; width:100%; padding:8px;" />
-      </div>
+        <div class="form-group">
+          <label for="title" class="form-label">タイトル <span class="required">*</span></label>
+          <input id="title" type="text" class="form-input" required />
+        </div>
 
-      <div style="margin-bottom:20px;">
-        <label for="content" style="display:block; font-weight:bold; margin-bottom:4px;">本文 *</label>
-        <textarea id="content" rows="12" required style="display:block; width:100%; padding:8px;"></textarea>
-      </div>
+        <div class="form-group">
+          <label for="category" class="form-label">カテゴリ</label>
+          <input id="category" type="text" class="form-input" placeholder="例：お知らせ、イベント、プレスリリース" />
+        </div>
 
-      <div style="margin-bottom:20px;">
-        <label for="thumbnail" style="display:block; font-weight:bold; margin-bottom:4px;">サムネイル画像</label>
-        <div id="currentThumbnail"></div>
-        <input id="thumbnail" type="file" accept="image/*" />
-      </div>
+        <div class="form-group">
+          <label for="content" class="form-label">本文 <span class="required">*</span></label>
+          <textarea id="content" class="form-textarea" required></textarea>
+        </div>
 
-      <div style="margin-bottom:24px;">
-        <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
-          <input id="is_published" type="checkbox" />
-          公開する
-        </label>
-      </div>
+        <div class="form-group">
+          <label class="form-label">サムネイル画像</label>
+          <img id="thumbnailPreview" class="thumbnail-preview" src="" alt="サムネイル" style="display:none;" />
+          <div class="file-input-wrapper">
+            <label for="thumbnail" class="file-input-label">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              画像を変更
+            </label>
+            <input id="thumbnail" type="file" accept="image/*" />
+          </div>
+          <p id="thumbnailHint" class="form-hint" style="display:none;">新しい画像を選択すると上書きされます</p>
+        </div>
 
-      <div style="display:flex; gap:12px;">
-        <button type="submit">保存する</button>
-        <a href="index.html">キャンセル</a>
-      </div>
-    </form>
-  </main>
+        <div class="form-group">
+          <label class="checkbox-label">
+            <span class="toggle">
+              <input id="is_published" type="checkbox" />
+              <span class="toggle-track"></span>
+              <span class="toggle-thumb"></span>
+            </span>
+            公開する
+          </label>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" id="submitBtn" class="btn btn-primary">保存する</button>
+          <a href="index.html" class="btn btn-ghost">キャンセル</a>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <script src="../js/supabase-config.js"></script>
   <script src="../js/auth.js"></script>
   <script>
-    // URLクエリパラメータから id を取得
     const id = new URLSearchParams(location.search).get('id')
     let originalData = null
 
@@ -69,22 +95,35 @@
       if (error || !data) { alert('データの取得に失敗しました'); return }
 
       originalData = data
-      document.getElementById('title').value        = data.title
-      document.getElementById('content').value      = data.content
-      document.getElementById('category').value     = data.category ?? ''
-      document.getElementById('is_published').checked = data.is_published
+      document.getElementById('title').value              = data.title
+      document.getElementById('content').value            = data.content
+      document.getElementById('category').value           = data.category ?? ''
+      document.getElementById('is_published').checked     = data.is_published
       document.getElementById('existing_thumbnail_url').value = data.thumbnail_url ?? ''
 
       if (data.thumbnail_url) {
-        document.getElementById('currentThumbnail').innerHTML = `
-          <img src="${data.thumbnail_url}" alt="現在のサムネイル" style="max-width:200px; display:block; margin-bottom:4px;">
-          <small style="color:#6b7280;">新しい画像を選択すると上書きされます</small>
-        `
+        const preview = document.getElementById('thumbnailPreview')
+        preview.src = data.thumbnail_url
+        preview.style.display = 'block'
+        document.getElementById('thumbnailHint').style.display = 'block'
       }
     }
 
+    // 画像プレビュー（新規選択時）
+    document.getElementById('thumbnail').addEventListener('change', (e) => {
+      const file = e.target.files[0]
+      if (!file) return
+      const preview = document.getElementById('thumbnailPreview')
+      preview.src = URL.createObjectURL(file)
+      preview.style.display = 'block'
+      document.getElementById('thumbnailHint').style.display = 'block'
+    })
+
     document.getElementById('newsForm').addEventListener('submit', async (e) => {
       e.preventDefault()
+      const btn = document.getElementById('submitBtn')
+      btn.disabled    = true
+      btn.textContent = '保存中...'
 
       const title        = document.getElementById('title').value
       const content      = document.getElementById('content').value
@@ -99,7 +138,11 @@
         const { data: uploadData, error: uploadError } = await db.storage
           .from('news-images')
           .upload(path, imageFile)
-        if (uploadError) { alert('画像のアップロードに失敗しました'); return }
+        if (uploadError) {
+          alert('画像のアップロードに失敗しました')
+          btn.disabled = false; btn.textContent = '保存する'
+          return
+        }
         const { data: { publicUrl } } = db.storage.from('news-images').getPublicUrl(uploadData.path)
         thumbnail_url = publicUrl
       }
@@ -113,7 +156,11 @@
         title, content, category, thumbnail_url, is_published, published_at
       }).eq('id', id)
 
-      if (error) { alert('保存に失敗しました'); return }
+      if (error) {
+        alert('保存に失敗しました')
+        btn.disabled = false; btn.textContent = '保存する'
+        return
+      }
       window.location.href = 'index.html'
     })
 

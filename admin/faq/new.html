@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FAQ新規作成</title>
+  <link rel="stylesheet" href="../admin.css?v=2" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <div class="layout">
+    <div id="sidebar"></div>
+    <main class="layout-main">
+      <div class="page-wrapper-narrow">
+        <a href="index.html" class="back-link">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          一覧に戻る
+        </a>
+        <h1 class="page-title" style="margin:12px 0 20px;">FAQ新規作成</h1>
+
+        <div class="form-card">
+          <form id="faqForm">
+            <div class="form-group">
+              <label for="question" class="form-label">質問 <span class="required">*</span></label>
+              <input id="question" type="text" class="form-input" placeholder="よくある質問を入力" required />
+            </div>
+            <div class="form-group">
+              <label for="answer" class="form-label">回答 <span class="required">*</span></label>
+              <textarea id="answer" class="form-textarea" placeholder="回答を入力してください" required></textarea>
+            </div>
+            <div class="form-group">
+              <label for="category" class="form-label">カテゴリ</label>
+              <input id="category" type="text" class="form-input" placeholder="例：料金、サービス、お支払い" />
+            </div>
+            <div class="form-group">
+              <label for="sort_order" class="form-label">表示順</label>
+              <input id="sort_order" type="number" class="form-input" value="0" min="0" style="max-width:120px;" />
+              <p class="form-hint">数字が小さいほど上に表示されます</p>
+            </div>
+            <div class="form-group">
+              <label class="checkbox-label">
+                <span class="toggle">
+                  <input id="is_published" type="checkbox" />
+                  <span class="toggle-track"></span>
+                  <span class="toggle-thumb"></span>
+                </span>
+                公開する
+              </label>
+            </div>
+            <div class="form-actions">
+              <button type="submit" id="submitBtn" class="btn btn-primary">保存する</button>
+              <a href="index.html" class="btn btn-ghost">キャンセル</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="../../js/supabase-config.js"></script>
+  <script src="../../js/auth.js"></script>
+  <script src="../nav.js"></script>
+  <script>
+    async function init() { await requireAuth() }
+
+    document.getElementById('faqForm').addEventListener('submit', async (e) => {
+      e.preventDefault()
+      const btn = document.getElementById('submitBtn')
+      btn.disabled = true; btn.textContent = '保存中...'
+
+      const question     = document.getElementById('question').value
+      const answer       = document.getElementById('answer').value
+      const category     = document.getElementById('category').value || null
+      const sort_order   = parseInt(document.getElementById('sort_order').value) || 0
+      const is_published = document.getElementById('is_published').checked
+
+      const { error } = await db.from('faq').insert({ question, answer, category, sort_order, is_published })
+      if (error) { alert('保存に失敗しました'); btn.disabled = false; btn.textContent = '保存する'; return }
+      window.location.href = 'index.html'
+    })
+
+    init()
+  </script>
+</body>
+</html>

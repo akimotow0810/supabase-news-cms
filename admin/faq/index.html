@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FAQ管理</title>
+  <link rel="stylesheet" href="../admin.css?v=2" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <div class="layout">
+    <div id="sidebar"></div>
+    <main class="layout-main">
+      <div class="page-wrapper">
+        <div class="page-top">
+          <h1 class="page-title">FAQ管理</h1>
+          <a href="new.html" class="btn btn-primary">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            新規作成
+          </a>
+        </div>
+
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>質問 / 回答</th>
+                <th>カテゴリ</th>
+                <th>表示順</th>
+                <th>公開状態</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="faqList"></tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="../../js/supabase-config.js"></script>
+  <script src="../../js/auth.js"></script>
+  <script src="../nav.js"></script>
+  <script>
+    async function init() {
+      await requireAuth()
+
+      const { data, error } = await db
+        .from('faq')
+        .select('*')
+        .order('sort_order', { ascending: true })
+        .order('created_at', { ascending: true })
+
+      if (error) { alert('データの取得に失敗しました'); return }
+
+      const tbody = document.getElementById('faqList')
+      if (!data.length) {
+        tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state">FAQがまだありません</div></td></tr>`
+        return
+      }
+
+      tbody.innerHTML = data.map(faq => `
+        <tr>
+          <td class="td-qa">
+            <p class="td-question">${escHtml(faq.question)}</p>
+            <p class="td-answer">${escHtml(faq.answer)}</p>
+          </td>
+          <td class="td-muted">${faq.category ? escHtml(faq.category) : '–'}</td>
+          <td class="td-muted">${faq.sort_order}</td>
+          <td>
+            <span class="badge ${faq.is_published ? 'badge-published' : 'badge-draft'}">
+              ${faq.is_published ? '公開中' : '非公開'}
+            </span>
+          </td>
+          <td>
+            <div class="td-actions">
+              <a href="edit.html?id=${faq.id}" class="link-edit">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                編集
+              </a>
+              <button onclick="deleteFaq('${faq.id}', '${escAttr(faq.question)}')" class="btn btn-danger">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+                削除
+              </button>
+            </div>
+          </td>
+        </tr>
+      `).join('')
+    }
+
+    async function deleteFaq(id, question) {
+      if (!confirm(`「${question}」を削除しますか？`)) return
+      const { error } = await db.from('faq').delete().eq('id', id)
+      if (error) { alert('削除に失敗しました'); return }
+      init()
+    }
+
+    function escHtml(str) {
+      return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+    }
+    function escAttr(str) { return String(str).replace(/'/g, '&#39;') }
+
+    init()
+  </script>
+</body>
+</html>
