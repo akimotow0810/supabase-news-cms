@@ -654,7 +654,7 @@ input[type="file"] { display: none; }
 /* Photo Dropzone */
 .photo-dropzone {
   width: 100%;
-  aspect-ratio: 16/9;
+  min-height: 220px;
   border: 2px dashed #d1d5db;
   border-radius: 12px;
   display: flex;
