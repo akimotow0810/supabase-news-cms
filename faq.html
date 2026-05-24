@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>よくある質問</title>
+  <!--
+    【実装例】公開サイト向けFAQページ
+    カテゴリ絞り込み・アコーディオン開閉の実装例です。
+    デザインは各プロジェクトに合わせて自由に変更してください。
+    データ取得のロジックはそのまま流用できます。
+  -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+  <h1>よくある質問</h1>
+
+  <!-- カテゴリ絞り込み（任意） -->
+  <div id="categoryFilter"></div>
+
+  <!-- FAQ一覧の挿入先 -->
+  <div id="faqList"></div>
+
+  <script src="js/supabase-config.js"></script>
+  <script>
+    // ============================================================
+    // データ取得（変更不要）
+    // ============================================================
+
+    async function fetchFaqs(category = null) {
+      let query = db
+        .from('faq')
+        .select('*')
+        .eq('is_published', true)
+        .order('sort_order', { ascending: true })
+        .order('created_at', { ascending: true })
+
+      if (category) query = query.eq('category', category)
+
+      const { data, error } = await query
+      if (error) { console.error(error); return [] }
+      return data
+    }
+
+    async function fetchCategories() {
+      const { data, error } = await db
+        .from('faq')
+        .select('category')
+        .eq('is_published', true)
+        .not('category', 'is', null)
+
+      if (error) return []
+      return [...new Set(data.map(item => item.category).filter(Boolean))]
+    }
+
+    // ============================================================
+    // 描画（デザインはここを変更する）
+    // ============================================================
+
+    function renderFaqs(faqs) {
+      const el = document.getElementById('faqList')
+      if (!faqs.length) {
+        el.innerHTML = '<p>FAQはありません。</p>'
+        return
+      }
+
+      // アコーディオン形式で描画
+      el.innerHTML = faqs.map((faq, i) => `
+        <div class="faq-item">
+          <button class="faq-question" onclick="toggleFaq(${i})" aria-expanded="false" aria-controls="faq-answer-${i}">
+            <span>Q. ${faq.question}</span>
+            <span class="faq-icon">＋</span>
+          </button>
+          <div class="faq-answer" id="faq-answer-${i}" hidden>
+            <p>A. ${faq.answer}</p>
+          </div>
+        </div>
+      `).join('')
+    }
+
+    function toggleFaq(index) {
+      const answer = document.getElementById(`faq-answer-${index}`)
+      const btn = answer.previousElementSibling
+      const icon = btn.querySelector('.faq-icon')
+      const isOpen = !answer.hidden
+
+      answer.hidden = isOpen
+      btn.setAttribute('aria-expanded', String(!isOpen))
+      icon.textContent = isOpen ? '＋' : '－'
+    }
+
+    function renderCategories(categories) {
+      if (!categories.length) return
+      const el = document.getElementById('categoryFilter')
+      el.innerHTML = [
+        '<button onclick="onCategoryClick(null)">すべて</button>',
+        ...categories.map(c => `<button onclick="onCategoryClick('${c}')">${c}</button>`)
+      ].join('')
+    }
+
+    async function onCategoryClick(category) {
+      const faqs = await fetchFaqs(category)
+      renderFaqs(faqs)
+    }
+
+    // ============================================================
+    // 初期ロード
+    // ============================================================
+
+    async function init() {
+      const [faqs, categories] = await Promise.all([
+        fetchFaqs(),
+        fetchCategories(),
+      ])
+      renderFaqs(faqs)
+      renderCategories(categories)
+    }
+
+    init()
+  </script>
+
+</body>
+</html>

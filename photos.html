@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>フォト</title>
+  <!--
+    【実装例】公開サイト向けフォトギャラリーページ
+    デザインは各プロジェクトに合わせて自由に変更してください。
+    データ取得のロジックはそのまま流用できます。
+  -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+  <h1>フォト</h1>
+
+  <!-- フォトグリッドの挿入先 -->
+  <div id="photoGrid"></div>
+
+  <!-- lightbox用オーバーレイ（任意） -->
+  <div id="lightbox" style="display:none;" onclick="closeLightbox()">
+    <img id="lightboxImg" src="" alt="" />
+    <p id="lightboxCaption"></p>
+  </div>
+
+  <script src="js/supabase-config.js"></script>
+  <script>
+    // ============================================================
+    // データ取得（変更不要）
+    // ============================================================
+
+    async function fetchPhotos() {
+      const { data, error } = await db
+        .from('photos')
+        .select('*')
+        .eq('is_published', true)
+        .order('sort_order', { ascending: true })
+        .order('created_at', { ascending: false })
+
+      if (error) { console.error(error); return [] }
+      return data
+    }
+
+    // ============================================================
+    // 描画（デザインはここを変更する）
+    // ============================================================
+
+    function renderPhotos(photos) {
+      const el = document.getElementById('photoGrid')
+      if (!photos.length) {
+        el.innerHTML = '<p>フォトはありません。</p>'
+        return
+      }
+
+      el.innerHTML = photos.map(photo => `
+        <div class="photo-item" onclick="openLightbox('${photo.image_url}', '${(photo.title ?? '').replace(/'/g, "\\'")}', '${(photo.description ?? '').replace(/'/g, "\\'")}')">
+          <img
+            src="${photo.image_url}"
+            alt="${photo.title ?? ''}"
+            loading="lazy"
+          />
+          ${photo.title ? `<p>${photo.title}</p>` : ''}
+        </div>
+      `).join('')
+    }
+
+    // ============================================================
+    // Lightbox（任意：不要なら削除してください）
+    // ============================================================
+
+    function openLightbox(url, title, description) {
+      document.getElementById('lightboxImg').src = url
+      document.getElementById('lightboxImg').alt = title
+      document.getElementById('lightboxCaption').textContent =
+        [title, description].filter(Boolean).join(' — ')
+      document.getElementById('lightbox').style.display = 'flex'
+    }
+
+    function closeLightbox() {
+      document.getElementById('lightbox').style.display = 'none'
+      document.getElementById('lightboxImg').src = ''
+    }
+
+    // ESCキーで閉じる
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeLightbox()
+    })
+
+    // ============================================================
+    // 初期ロード
+    // ============================================================
+
+    async function init() {
+      const photos = await fetchPhotos()
+      renderPhotos(photos)
+    }
+
+    init()
+  </script>
+
+</body>
+</html>
